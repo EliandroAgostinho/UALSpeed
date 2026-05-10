@@ -1,0 +1,1 @@
+# ficheiro vazio — marca a pasta como módulo Python
