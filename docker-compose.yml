@@ -2,6 +2,8 @@ version: '3.8'
 
 services:
 
+  # ─── SERVIÇOS DA APLICAÇÃO ───────────────────────────────
+
   data-processor:
     build: ./services/data-processor
     container_name: ualspped-data-processor
@@ -16,6 +18,30 @@ services:
       - ualspped-network
     restart: unless-stopped
 
+  results-manager:
+    build: ./services/results-manager
+    container_name: ualspped-results-manager
+    ports:
+      - "8001:8001"
+    depends_on:
+      redis:
+        condition: service_started
+      mongo-primary:
+        condition: service_healthy
+      mongo-secondary1:
+        condition: service_healthy
+      mongo-secondary2:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MONGO_URL=mongodb://mongo-primary:27017,mongo-secondary1:27017,mongo-secondary2:27017/?replicaSet=ualspped-rs
+    networks:
+      - ualspped-network
+    restart: on-failure
+
+  # ─── REDIS ───────────────────────────────────────────────
+
   redis:
     image: redis:7-alpine
     container_name: ualspped-redis
@@ -25,6 +51,130 @@ services:
       - ualspped-network
     restart: unless-stopped
 
+  # ─── MONGODB REPLICA SET ─────────────────────────────────
+
+  mongo-primary:
+    image: mongo:7
+    container_name: ualspped-mongo-primary
+    command: mongod --replSet ualspped-rs --bind_ip_all
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_primary_data:/data/db
+    networks:
+      - ualspped-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      #start_period: 30s
+
+  mongo-secondary1:
+    image: mongo:7
+    container_name: ualspped-mongo-secondary1
+    command: mongod --replSet ualspped-rs --bind_ip_all
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_secondary1_data:/data/db
+    networks:
+      - ualspped-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      #start_period: 30s
+
+  mongo-secondary2:
+    image: mongo:7
+    container_name: ualspped-mongo-secondary2
+    command: mongod --replSet ualspped-rs --bind_ip_all
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo_secondary2_data:/data/db
+    networks:
+      - ualspped-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      #start_period: 30s
+
+  # Inicializa o Replica Set automaticamente
+  mongo-init:
+    image: mongo:7
+    container_name: ualspped-mongo-init
+    depends_on:
+      mongo-primary:
+        condition: service_healthy
+      mongo-secondary1:
+        condition: service_healthy
+      mongo-secondary2:
+        condition: service_healthy
+    #volumes:
+     # - ./infra/mongo/init-replica.js:/docker-entrypoint-initdb.d/init-replica.js   #./infra/mongo/init-replica.js:/init-replica.js
+     # - ./infra/mongo/init-replica.sh:/init-replica.sh #./infra/mongo/wait-and-init.sh:/wait-and-init.sh
+    entrypoint: >
+      bash -c "
+        echo '⏳ Aguardando MongoDB primario...' &&
+        until mongosh --host mongo-primary:27017 --eval 'db.adminCommand({ping: 1})' --quiet; do
+          echo 'MongoDB ainda nao responde, aguardando 3s...'
+          sleep 3
+        done &&
+        echo '✅ MongoDB disponivel!' &&
+        mongosh --host mongo-primary:27017 --eval '
+          var maxTentativas = 10;
+          var tentativa = 0;
+          var iniciado = false;
+          while (tentativa < maxTentativas && !iniciado) {
+            try {
+              var status = rs.status();
+              if (status.ok === 1) {
+                print(\"Replica Set ja configurado:\", status.set);
+                iniciado = true;
+              }
+            } catch(e) {
+              try {
+                rs.initiate({
+                  _id: \"ualspped-rs\",
+                  members: [
+                    { _id: 0, host: \"mongo-primary:27017\", priority: 2 },
+                    { _id: 1, host: \"mongo-secondary1:27017\", priority: 1 },
+                    { _id: 2, host: \"mongo-secondary2:27017\", priority: 1 }
+                  ]
+                });
+                print(\"✅ Replica Set iniciado com sucesso!\");
+                iniciado = true;
+              } catch(e2) {
+                print(\"Tentativa\", tentativa, \"falhou:\", e2.message);
+                sleep(3000);
+                tentativa++;
+              }
+            }
+          }
+          if (!iniciado) { quit(1); }
+        ' &&
+        echo '⏳ Aguardando eleicao do Primary (15s)...' &&
+        sleep 15 &&
+        echo '✅ Verificando estado final:' &&
+        mongosh --host mongo-primary:27017 --eval 'rs.status().members.forEach(m => print(m.name, m.stateStr))'
+      "   
+    #["/bin/bash", "/init-replica.sh"] #command: bash /wait-and-init.sh
+    networks:
+      - ualspped-network
+
 networks:
   ualspped-network:
     driver: bridge
+
+volumes:
+  mongo_primary_data:
+  mongo_secondary1_data:
+  mongo_secondary2_data:
