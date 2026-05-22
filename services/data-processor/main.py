@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from routes.telemetria import router as telemetria_router
 import logging
+import socket
 
 # Configuração de logging
 logging.basicConfig(
@@ -32,3 +33,10 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+@app.get("/instancia")
+async def instancia():
+    return {
+        "hostname": socket.gethostname(),  # ID único do container
+        "servico": "data-processor"
+    }

@@ -5,6 +5,7 @@ from routes.classificacao import router as classificacao_router
 from database import init_db
 from consumer import iniciar_consumer
 import logging
+import socket
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,3 +37,10 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+@app.get("/instancia")
+async def instancia():
+    return {
+        "hostname": socket.gethostname(),
+        "servico": "results-manager"
+    }
