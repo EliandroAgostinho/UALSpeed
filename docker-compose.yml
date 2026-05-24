@@ -6,6 +6,7 @@ services:
 
   data-processor:
     build: ./services/data-processor
+    image: ualspped-data-processor:latest
     # SEM container_name — o Docker gera automaticamente
     # SEM ports — o Nginx faz o proxy internamente
     depends_on:
@@ -21,6 +22,7 @@ services:
 
   results-manager:
     build: ./services/results-manager
+    image: ualspped-results-manager:latest
     # SEM container_name
     # SEM ports
     deploy:
