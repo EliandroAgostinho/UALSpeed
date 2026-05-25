@@ -187,7 +187,23 @@ services:
       - results-manager
     networks:
       - ualspped-network
-    restart: unless-stopped    
+    restart: unless-stopped   
+
+  web-interface:
+    build: ./services/web-interface
+    image: ualspped-web-interface:latest
+    container_name: ualspped-web-interface
+    ports:
+      - "8002:8002"
+    environment:
+      - DATA_PROCESSOR_URL=http://data-processor:8000
+      - RESULTS_MANAGER_URL=http://results-manager:8001
+    depends_on:
+      - data-processor
+      - results-manager
+    networks:
+      - ualspped-network
+    restart: unless-stopped   
 
 networks:
   ualspped-network:

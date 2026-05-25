@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UALSpeed — Corrida ao Vivo</title>
+    <link rel="stylesheet" href="/static/shared.css">
+    <style>
+        .telemetria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .telemetria-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid var(--accent);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+        }
+        .telemetria-card .piloto {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .carro-num { color: var(--accent); margin-right: 8px; }
+        .dado-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .dado-row .label { color: var(--text-secondary); }
+        .dado-row .valor { font-weight: bold; }
+        .simulador {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+        .simulador h3 { margin-bottom: 20px; font-size: 16px; color: var(--accent); }
+        .pos-1 { color: #ffd700; font-weight: 900; }
+        .pos-2 { color: #c0c0c0; font-weight: 900; }
+        .pos-3 { color: #cd7f32; font-weight: 900; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🏎️ UALSpeed</h1>
+    <nav>
+        <a href="/">📊 Dashboard</a>
+        <a href="/corrida">🔴 Corrida</a>
+        <a href="/admin">⚙️ Admin</a>
+        <button id="btn-tema" onclick="toggleTema()">☀️ Tema Claro</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div style="margin-bottom:24px">
+        <span class="section-title">🔴 Corrida ao Vivo</span>
+        <span class="live-badge">LIVE</span>
+    </div>
+
+    <!-- Simulador -->
+    <div class="simulador">
+        <h3>📡 Enviar Telemetria</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nº Carro</label>
+                <input type="number" id="carro_numero" value="44" min="1" max="99">
+            </div>
+            <div class="form-group">
+                <label>Piloto</label>
+                <input type="text" id="piloto_nome" value="Lewis Hamilton">
+            </div>
+            <div class="form-group">
+                <label>Velocidade (km/h)</label>
+                <input type="number" id="velocidade" value="312" min="0" max="400">
+            </div>
+            <div class="form-group">
+                <label>RPM</label>
+                <input type="number" id="rpm" value="11200" min="0" max="15000">
+            </div>
+            <div class="form-group">
+                <label>Posição na Pista</label>
+                <input type="number" id="posicao_pista" value="1" min="1" max="20">
+            </div>
+            <div class="form-group">
+                <label>Volta Actual</label>
+                <input type="number" id="volta_atual" value="1" min="1">
+            </div>
+        </div>
+        <button class="btn" onclick="enviarTelemetria()">Enviar</button>
+        <button class="btn btn-secundario" id="btn-auto" onclick="toggleAuto()">
+            ▶ Modo Automático
+        </button>
+        <div id="feedback" class="feedback"></div>
+    </div>
+
+    <!-- Classificação -->
+    <div class="section-title" style="margin-bottom:16px">
+        🏁 Classificação em Tempo Real
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+        <table>
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th>Piloto</th>
+                    <th>Carro</th>
+                    <th>Voltas</th>
+                    <th>Velocidade</th>
+                    <th>Actualização</th>
+                </tr>
+            </thead>
+            <tbody id="classificacao-body">
+                <tr><td colspan="6" class="empty-state">
+                    Envia telemetria para começar
+                </td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Telemetria recente -->
+    <div class="section-title" style="margin:24px 0 16px">
+        📊 Últimos Eventos
+    </div>
+    <div class="telemetria-grid" id="telemetria-grid">
+        <div class="empty-state">Sem dados ainda...</div>
+    </div>
+
+</div>
+
+<script src="/static/shared.js"></script>
+<script>
+    let modoAuto = false;
+    let autoInterval = null;
+    let voltaActual = 1;
+
+    const pilotos = [
+        { numero: 44, nome: "Lewis Hamilton", pos: 1 },
+        { numero: 1,  nome: "Max Verstappen", pos: 2 },
+        { numero: 16, nome: "Charles Leclerc", pos: 3 },
+        { numero: 63, nome: "George Russell",  pos: 4 }
+    ];
+
+    async function enviarTelemetria() {
+        const dados = {
+            carro_numero: parseInt(document.getElementById('carro_numero').value),
+            piloto_nome:  document.getElementById('piloto_nome').value,
+            velocidade:   parseFloat(document.getElementById('velocidade').value),
+            rpm:          parseInt(document.getElementById('rpm').value),
+            posicao_pista: parseInt(document.getElementById('posicao_pista').value),
+            volta_atual:  parseInt(document.getElementById('volta_atual').value)
+        };
+        try {
+            await fetch('/api/corrida/telemetria', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            const fb = document.getElementById('feedback');
+            fb.textContent = `✅ Carro ${dados.carro_numero} | ${dados.velocidade} km/h`;
+            fb.className = 'feedback sucesso';
+        } catch(e) {
+            const fb = document.getElementById('feedback');
+            fb.textContent = '❌ Erro ao enviar';
+            fb.className = 'feedback erro';
+        }
+    }
+
+    function toggleAuto() {
+        modoAuto = !modoAuto;
+        const btn = document.getElementById('btn-auto');
+        if (modoAuto) {
+            btn.textContent = '⏹ Parar Automático';
+            btn.classList.add('btn-activo');
+            autoInterval = setInterval(enviarTelemetriaAuto, 2000);
+        } else {
+            btn.textContent = '▶ Modo Automático';
+            btn.classList.remove('btn-activo');
+            clearInterval(autoInterval);
+        }
+    }
+
+    function enviarTelemetriaAuto() {
+        pilotos.forEach(async p => {
+            await fetch('/api/corrida/telemetria', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    carro_numero: p.numero,
+                    piloto_nome: p.nome,
+                    velocidade: Math.round(280 + Math.random() * 80),
+                    rpm: Math.round(9000 + Math.random() * 3000),
+                    posicao_pista: p.pos,
+                    volta_atual: voltaActual
+                })
+            });
+        });
+        voltaActual++;
+        const fb = document.getElementById('feedback');
+        fb.textContent = `🤖 Auto — Volta ${voltaActual} | ${new Date().toLocaleTimeString('pt-PT')}`;
+        fb.className = 'feedback sucesso';
+    }
+
+    async function actualizarDados() {
+        try {
+            const r = await fetch('/api/corrida/classificacao');
+            const dados = await r.json();
+            const tbody = document.getElementById('classificacao-body');
+            if (dados.classificacao && dados.classificacao.length > 0) {
+                tbody.innerHTML = dados.classificacao.map(p => {
+                    const cls = p.posicao <= 3 ? `pos-${p.posicao}` : '';
+                    const hora = new Date(p.ultima_atualizacao).toLocaleTimeString('pt-PT');
+                    return `
+                        <tr>
+                            <td class="${cls}">${p.posicao}º</td>
+                            <td>${p.piloto_nome}</td>
+                            <td>#${p.carro_numero}</td>
+                            <td>${p.voltas_completas}</td>
+                            <td style="color:var(--accent);font-weight:bold">${p.ultima_velocidade} km/h</td>
+                            <td style="color:var(--text-muted);font-size:13px">${hora}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        } catch(e) {}
+
+        try {
+            const r = await fetch('/api/corrida/telemetria');
+            const dados = await r.json();
+            const grid = document.getElementById('telemetria-grid');
+            if (dados.dados && dados.dados.length > 0) {
+                grid.innerHTML = dados.dados.map(e => `
+                    <div class="telemetria-card">
+                        <div class="piloto">
+                            <span class="carro-num">#${e.carro_numero}</span>${e.piloto_nome}
+                        </div>
+                        <div class="dado-row">
+                            <span class="label">Velocidade</span>
+                            <span class="valor" style="color:var(--accent)">${e.velocidade} km/h</span>
+                        </div>
+                        <div class="dado-row">
+                            <span class="label">RPM</span>
+                            <span class="valor">${e.rpm}</span>
+                        </div>
+                        <div class="dado-row">
+                            <span class="label">Posição</span>
+                            <span class="valor">${e.posicao_pista}º</span>
+                        </div>
+                        <div class="dado-row">
+                            <span class="label">Volta</span>
+                            <span class="valor">${e.volta_atual}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch(e) {}
+    }
+
+    actualizarDados();
+    setInterval(actualizarDados, 2000);
+</script>
+</body>
+</html>

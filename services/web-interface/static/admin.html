@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UALSpeed — Admin</title>
+    <link rel="stylesheet" href="/static/shared.css">
+    <style>
+        .container { max-width: 900px; margin: 0 auto; padding: 30px; }
+        .badge {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🏎️ UALSpeed</h1>
+    <nav>
+        <a href="/">📊 Dashboard</a>
+        <a href="/corrida">🔴 Corrida</a>
+        <a href="/admin">⚙️ Admin</a>
+        <button id="btn-tema" onclick="toggleTema()">☀️ Tema Claro</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div style="margin-bottom:24px">
+        <span class="section-title">⚙️ Painel Administrativo</span>
+    </div>
+
+    <!-- Formulário -->
+    <div class="card">
+        <h2>➕ Registar Novo Piloto</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Número do Carro</label>
+                <input type="number" id="numero" placeholder="44" min="1" max="99">
+            </div>
+            <div class="form-group">
+                <label>Nome do Piloto</label>
+                <input type="text" id="nome" placeholder="Lewis Hamilton">
+            </div>
+            <div class="form-group">
+                <label>Equipa</label>
+                <input type="text" id="equipa" placeholder="Mercedes">
+            </div>
+            <div class="form-group">
+                <label>Nacionalidade</label>
+                <input type="text" id="nacionalidade" placeholder="Britânico">
+            </div>
+        </div>
+        <button class="btn" onclick="criarPiloto()">Registar Piloto</button>
+        <div id="feedback-piloto" class="feedback"></div>
+    </div>
+
+    <!-- Lista -->
+    <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:20px 24px 0">
+            <h2>👥 Pilotos Registados</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nº</th>
+                    <th>Nome</th>
+                    <th>Equipa</th>
+                    <th>Nacionalidade</th>
+                    <th>Pontos</th>
+                </tr>
+            </thead>
+            <tbody id="pilotos-tbody">
+                <tr><td colspan="5" class="empty-state">A carregar...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="/static/shared.js"></script>
+<script>
+    async function carregarPilotos() {
+        try {
+            const r = await fetch('/api/admin/pilotos');
+            const dados = await r.json();
+            const tbody = document.getElementById('pilotos-tbody');
+            if (dados.pilotos && dados.pilotos.length > 0) {
+                tbody.innerHTML = dados.pilotos.map(p => `
+                    <tr>
+                        <td><strong style="color:var(--accent)">#${p.numero}</strong></td>
+                        <td>${p.nome}</td>
+                        <td><span class="badge">${p.equipa}</span></td>
+                        <td>${p.nacionalidade}</td>
+                        <td>${p.pontos}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state">
+                    Nenhum piloto registado ainda
+                </td></tr>`;
+            }
+        } catch(e) {}
+    }
+
+    async function criarPiloto() {
+        const fb = document.getElementById('feedback-piloto');
+        const dados = {
+            numero: parseInt(document.getElementById('numero').value),
+            nome: document.getElementById('nome').value,
+            equipa: document.getElementById('equipa').value,
+            nacionalidade: document.getElementById('nacionalidade').value,
+            pontos: 0
+        };
+
+        if (!dados.numero || !dados.nome || !dados.equipa || !dados.nacionalidade) {
+            fb.textContent = '⚠️ Preenche todos os campos';
+            fb.className = 'feedback aviso';
+            return;
+        }
+
+        try {
+            const r = await fetch('/api/admin/pilotos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            const resp = await r.json();
+            if (resp.detail || r.status >= 400) {
+                fb.textContent = '❌ Piloto já existe ou dados inválidos';
+                fb.className = 'feedback erro';
+            } else {
+                fb.textContent = `✅ ${dados.nome} registado com sucesso!`;
+                fb.className = 'feedback sucesso';
+                ['numero','nome','equipa','nacionalidade'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+                carregarPilotos();
+            }
+        } catch(e) {
+            fb.textContent = '❌ Erro de ligação';
+            fb.className = 'feedback erro';
+        }
+    }
+
+    carregarPilotos();
+    setInterval(carregarPilotos, 5000);
+</script>
+</body>
+</html>

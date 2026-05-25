@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UALSpeed — Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #222;
+            --bg-hover: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #888;
+            --text-muted: #555;
+            --border: #2a2a2a;
+            --accent: #e10600;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --danger: #ff4444;
+        }
+        [data-tema="claro"] {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f0f0f0;
+            --bg-hover: #e8e8e8;
+            --text-primary: #111111;
+            --text-secondary: #555;
+            --text-muted: #999;
+            --border: #dddddd;
+            --accent: #e10600;
+            --success: #008844;
+            --warning: #cc8800;
+            --danger: #cc2222;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+        header {
+            background: linear-gradient(135deg, #e10600, #ff4444);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        header h1 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: white;
+        }
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        nav a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        nav a:hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+        nav a.activo {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            font-weight: 700;
+            border-bottom: 2px solid white;
+        }
+        #btn-tema {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+        #btn-tema:hover { background: rgba(255,255,255,0.25); }
+        .container { padding: 30px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: background 0.3s;
+        }
+        .card h2 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+        }
+        .metrica-valor {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--accent);
+        }
+        .metrica-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .servico-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .online  { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .offline { background: var(--danger);  box-shadow: 0 0 8px var(--danger); }
+        .degradado { background: var(--warning); }
+        .cluster-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .cluster-no {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .cluster-no .nome {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .cluster-no .estado {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--success);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th {
+            background: var(--bg-tertiary);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        tr:hover td { background: var(--bg-hover); }
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px;
+        }
+        .pos-1 { color: #ffd700; font-weight: bold; }
+        .pos-2 { color: #c0c0c0; font-weight: bold; }
+        .pos-3 { color: #cd7f32; font-weight: bold; }
+        .update-time {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🏎️ UALSpeed</h1>
+    <nav>
+        <a href="/" class="activo">📊 Dashboard</a>
+        <a href="/corrida">🔴 Corrida</a>
+        <a href="/admin">⚙️ Admin</a>
+        <button id="btn-tema" onclick="toggleTema()">☀️ Tema Claro</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center">
+        <span class="section-title">📊 Dashboard</span>
+        <span id="ultimo-update" style="font-size:12px; color:var(--text-muted)"></span>
+    </div>
+
+    <div class="grid">
+
+        <div class="card">
+            <h2>Estado dos Serviços</h2>
+            <div id="servicos">A carregar...</div>
+        </div>
+
+        <div class="card">
+            <h2>Métricas em Tempo Real</h2>
+            <div class="metrica-valor" id="total-eventos">0</div>
+            <div class="metrica-label">Total de eventos processados</div>
+            <br>
+            <div id="ultimo-evento" style="font-size:13px; color:var(--text-muted)">
+                Sem dados ainda
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Cluster Docker Swarm</h2>
+            <div class="cluster-grid">
+                <div class="cluster-no">
+                    <div class="nome">Manager</div>
+                    <div class="estado">● Activo</div>
+                </div>
+                <div class="cluster-no">
+                    <div class="nome">data-processor</div>
+                    <div class="estado">2 réplicas</div>
+                </div>
+                <div class="cluster-no">
+                    <div class="nome">results-manager</div>
+                    <div class="estado">2 réplicas</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1">
+            <h2>🏁 Classificação Actual</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pos</th>
+                        <th>Piloto</th>
+                        <th>Carro</th>
+                        <th>Voltas</th>
+                        <th>Velocidade</th>
+                        <th>Actualização</th>
+                    </tr>
+                </thead>
+                <tbody id="classificacao-tbody">
+                    <tr><td colspan="6" class="empty-state">
+                        Sem dados — envia telemetria para começar
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<div class="update-time">Actualiza automaticamente a cada 3 segundos</div>
+
+<script>
+    // ── TEMA ──────────────────────────────────
+    function iniciarTema() {
+        const tema = localStorage.getItem('tema') || 'escuro';
+        aplicarTema(tema);
+    }
+
+    function aplicarTema(tema) {
+        document.documentElement.setAttribute('data-tema', tema);
+        localStorage.setItem('tema', tema);
+        const btn = document.getElementById('btn-tema');
+        if (btn) btn.textContent = tema === 'escuro' ? '☀️ Tema Claro' : '🌙 Tema Escuro';
+    }
+
+    function toggleTema() {
+        const actual = localStorage.getItem('tema') || 'escuro';
+        aplicarTema(actual === 'escuro' ? 'claro' : 'escuro');
+    }
+
+    // Inicia o tema imediatamente
+    iniciarTema();
+
+    // ── DASHBOARD ─────────────────────────────
+    async function actualizarDashboard() {
+        try {
+            const r = await fetch('/api/metricas');
+            const dados = await r.json();
+
+            document.getElementById('ultimo-update').textContent =
+                'Último update: ' + new Date(dados.timestamp).toLocaleTimeString('pt-PT');
+
+            document.getElementById('servicos').innerHTML =
+                Object.entries(dados.servicos).map(([nome, info]) => `
+                    <div class="servico-row">
+                        <span class="status-dot ${info.status}"></span>
+                        <span>${nome}</span>
+                        <span style="margin-left:auto; font-size:12px; color:var(--text-muted)">
+                            ${info.status}
+                        </span>
+                    </div>
+                `).join('');
+
+            document.getElementById('total-eventos').textContent = dados.total_eventos;
+
+            if (dados.ultimo_evento) {
+                const e = dados.ultimo_evento;
+                document.getElementById('ultimo-evento').innerHTML =
+                    `<strong>Último:</strong> Carro ${e.carro_numero} —
+                     ${e.velocidade} km/h | Volta ${e.volta_atual}`;
+            }
+
+            const tbody = document.getElementById('classificacao-tbody');
+            if (dados.classificacao && dados.classificacao.length > 0) {
+                tbody.innerHTML = dados.classificacao.map(p => {
+                    const cls = p.posicao <= 3 ? `pos-${p.posicao}` : '';
+                    const hora = new Date(p.ultima_atualizacao).toLocaleTimeString('pt-PT');
+                    return `
+                        <tr>
+                            <td class="${cls}">${p.posicao}º</td>
+                            <td>${p.piloto_nome}</td>
+                            <td>#${p.carro_numero}</td>
+                            <td>${p.voltas_completas}</td>
+                            <td style="color:var(--accent); font-weight:bold">
+                                ${p.ultima_velocidade} km/h
+                            </td>
+                            <td style="color:var(--text-muted); font-size:13px">${hora}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        } catch(e) {
+            console.error('Erro:', e);
+        }
+    }
+
+    actualizarDashboard();
+    setInterval(actualizarDashboard, 3000);
+</script>
+
+</body>
+</html>
