@@ -29,19 +29,29 @@ async def processar_telemetria(dados: dict, db):
     """
     try:
         carro = dados['carro_numero']
-        piloto = dados['piloto_nome']
+       # piloto = dados['piloto_nome']
         volta = dados['volta_atual']
         velocidade = dados['velocidade']
         rpm = dados['rpm']
         posicao = dados['posicao_pista']
         timestamp = datetime.fromisoformat(dados['timestamp'])
+        
+        # Vai buscar o nome oficial do piloto registado
+        piloto_registado = await db["pilotos"].find_one({"numero": carro})
+        if piloto_registado:
+            piloto_nome = piloto_registado["nome"]
+            equipa = piloto_registado.get("equipa", "")
+        else:
+            piloto_nome = dados.get('piloto_nome', f'Carro {carro}')
+            equipa = ""
 
         # Guarda resultado da volta
         await db["resultados"].update_one(
             {"carro_numero": carro, "volta": volta},
             {
                 "$set": {
-                    "piloto_nome": piloto,
+                    "piloto_nome": piloto_nome,
+                    "equipa": equipa,
                     "posicao": posicao,
                     "timestamp": timestamp
                 },
@@ -59,7 +69,8 @@ async def processar_telemetria(dados: dict, db):
         await db["classificacao"].update_one(
             {"carro_numero": carro},
             {"$set": {
-                "piloto_nome": piloto,
+                "piloto_nome": piloto_nome,
+                "equipa": equipa,
                 "posicao": posicao,
                 "voltas_completas": volta,
                 "ultima_velocidade": velocidade,
@@ -68,7 +79,7 @@ async def processar_telemetria(dados: dict, db):
             upsert=True
         )
 
-        logger.info(f" Processado: Carro {carro} | Pos {posicao} | {velocidade} km/h")
+        logger.info(f" Processado:{piloto_nome} | Carro {carro} | Pos {posicao} | {velocidade} km/h")
 
     except Exception as e:
         logger.error(f" Erro ao processar telemetria: {e}", exc_info=True)

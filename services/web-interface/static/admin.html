@@ -4,17 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UALSpeed — Admin</title>
-    <link rel="stylesheet" href="/static/shared.css">
     <style>
-        .container { max-width: 900px; margin: 0 auto; padding: 30px; }
-        .badge {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: var(--text-secondary);
+        :root {
+            --bg: #0a0a0a; --bg2: #1a1a1a; --bg3: #222;
+            --text: #fff; --text2: #888; --text3: #555;
+            --border: #2a2a2a; --accent: #e10600;
+            --green: #00ff88; --red: #ff4444; --yellow: #ffaa00;
         }
+        [data-tema="claro"] {
+            --bg: #f5f5f5; --bg2: #fff; --bg3: #f0f0f0;
+            --text: #111; --text2: #555; --text3: #999;
+            --border: #ddd; --green: #008844;
+            --red: #cc2222; --yellow: #cc8800;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Segoe UI',sans-serif;
+            background:var(--bg); color:var(--text);
+            min-height:100vh; transition:background 0.3s,color 0.3s;
+        }
+        header {
+            background:linear-gradient(135deg,#e10600,#ff4444);
+            padding:16px 40px; display:flex;
+            justify-content:space-between; align-items:center;
+            position:sticky; top:0; z-index:100;
+        }
+        header h1 { font-size:24px; font-weight:900; color:white; }
+        nav { display:flex; gap:8px; align-items:center; }
+        nav a {
+            color:rgba(255,255,255,0.8); text-decoration:none;
+            padding:8px 16px; border-radius:6px; font-size:14px;
+        }
+        nav a:hover { background:rgba(255,255,255,0.15); color:white; }
+        nav a.activo {
+            background:rgba(255,255,255,0.25); color:white;
+            font-weight:700; border-bottom:2px solid white;
+        }
+        #btn-tema {
+            background:rgba(255,255,255,0.15); color:white;
+            border:1px solid rgba(255,255,255,0.3);
+            padding:8px 14px; border-radius:6px;
+            cursor:pointer; font-size:13px;
+        }
+        .container { padding:30px; max-width:1000px; margin:0 auto; }
+        .section-title {
+            font-size:13px; text-transform:uppercase;
+            letter-spacing:2px; color:var(--text2);
+        }
+        .card {
+            background:var(--bg2); border-radius:12px;
+            padding:24px; border:1px solid var(--border);
+            margin-bottom:24px; transition:background 0.3s;
+        }
+        .card h2 {
+            font-size:14px; text-transform:uppercase;
+            letter-spacing:1px; color:var(--text2); margin-bottom:20px;
+        }
+        .form-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+            gap:14px; margin-bottom:20px;
+        }
+        .form-group label {
+            display:block; font-size:11px; color:var(--text2);
+            text-transform:uppercase; margin-bottom:6px;
+        }
+        .form-group input, .form-group select {
+            width:100%; background:var(--bg3);
+            border:1px solid var(--border); border-radius:6px;
+            padding:10px; color:var(--text); font-size:14px;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline:none; border-color:var(--accent);
+        }
+        .btn {
+            background:var(--accent); color:white; border:none;
+            padding:12px 24px; border-radius:8px; cursor:pointer;
+            font-size:13px; font-weight:bold; transition:background 0.2s;
+        }
+        .btn:hover { background:#ff2200; }
+        .btn-verde {
+            background:#005500; color:var(--green);
+            border:1px solid var(--green);
+            padding:8px 16px; border-radius:6px;
+            cursor:pointer; font-size:12px; font-weight:bold;
+            transition:all 0.2s; white-space:nowrap;
+        }
+        .btn-verde:hover { background:#006600; }
+        .btn-verde:disabled {
+            background:#1a1a1a; color:#444;
+            border-color:#333; cursor:not-allowed;
+        }
+        .feedback {
+            margin-top:12px; font-size:13px; min-height:20px;
+        }
+        .sucesso { color:var(--green); }
+        .erro { color:var(--red); }
+        .aviso { color:var(--yellow); }
+        table { width:100%; border-collapse:collapse; font-size:14px; }
+        th {
+            background:var(--bg3); padding:12px 16px;
+            text-align:left; font-size:12px;
+            text-transform:uppercase; color:var(--text2);
+        }
+        td { padding:14px 16px; border-bottom:1px solid var(--border); }
+        tr:hover td { background:var(--bg3); }
+        .badge {
+            background:var(--bg3); border:1px solid var(--border);
+            padding:4px 10px; border-radius:20px;
+            font-size:12px; color:var(--text2);
+        }
+        .na-corrida {
+            color:var(--green); font-size:12px; font-weight:bold;
+        }
+        .modal-overlay {
+            display:none; position:fixed; top:0; left:0;
+            width:100%; height:100%;
+            background:rgba(0,0,0,0.7); z-index:200;
+            justify-content:center; align-items:center;
+        }
+        .modal-overlay.aberto { display:flex; }
+        .modal {
+            background:var(--bg2); border-radius:12px;
+            padding:32px; width:400px;
+            border:1px solid var(--border);
+        }
+        .modal h3 {
+            font-size:18px; margin-bottom:20px; color:var(--accent);
+        }
+        .modal-piloto {
+            background:var(--bg3); border-radius:8px;
+            padding:16px; margin-bottom:20px;
+            border:1px solid var(--border);
+        }
+        .modal-piloto .nome { font-size:18px; font-weight:bold; margin-bottom:4px; }
+        .modal-piloto .detalhes { font-size:13px; color:var(--text2); }
+        .modal-actions { display:flex; gap:12px; justify-content:flex-end; margin-top:20px; }
+        .btn-cancelar {
+            background:var(--bg3); color:var(--text);
+            border:1px solid var(--border);
+            padding:10px 20px; border-radius:6px;
+            cursor:pointer; font-size:13px;
+        }
+        #feedback-modal { margin-top:12px; font-size:13px; min-height:20px; }
     </style>
 </head>
 <body>
@@ -24,7 +156,7 @@
     <nav>
         <a href="/">📊 Dashboard</a>
         <a href="/corrida">🔴 Corrida</a>
-        <a href="/admin">⚙️ Admin</a>
+        <a href="/admin" class="activo">⚙️ Admin</a>
         <button id="btn-tema" onclick="toggleTema()">☀️ Tema Claro</button>
     </nav>
 </header>
@@ -34,7 +166,7 @@
         <span class="section-title">⚙️ Painel Administrativo</span>
     </div>
 
-    <!-- Formulário -->
+    <!-- Formulário de registo -->
     <div class="card">
         <h2>➕ Registar Novo Piloto</h2>
         <div class="form-grid">
@@ -59,8 +191,8 @@
         <div id="feedback-piloto" class="feedback"></div>
     </div>
 
-    <!-- Lista -->
-    <div class="card" style="padding:0;overflow:hidden">
+    <!-- Lista de pilotos -->
+    <div class="card" style="padding:0; overflow:hidden">
         <div style="padding:20px 24px 0">
             <h2>👥 Pilotos Registados</h2>
         </div>
@@ -72,47 +204,129 @@
                     <th>Equipa</th>
                     <th>Nacionalidade</th>
                     <th>Pontos</th>
+                    <th>Acção</th>
                 </tr>
             </thead>
             <tbody id="pilotos-tbody">
-                <tr><td colspan="5" class="empty-state">A carregar...</td></tr>
+                <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:40px">
+                    A carregar...
+                </td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<script src="/static/shared.js"></script>
+<!-- Modal para adicionar à corrida -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <h3>🏁 Adicionar à Corrida</h3>
+
+        <div class="modal-piloto" id="modal-piloto-info">
+            <div class="nome" id="modal-nome">-</div>
+            <div class="detalhes" id="modal-detalhes">-</div>
+        </div>
+
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+            <div class="form-group">
+                <label>Posição inicial</label>
+                <input type="number" id="modal-posicao" value="1" min="1" max="20">
+            </div>
+            <div class="form-group">
+                <label>Volta inicial</label>
+                <input type="number" id="modal-volta" value="1" min="1">
+            </div>
+        </div>
+
+        <div id="feedback-modal" class="feedback"></div>
+
+        <div class="modal-actions">
+            <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+            <button class="btn" onclick="confirmarAddCorrida()">
+                🏁 Adicionar à Corrida
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+    // ── TEMA ──────────────────────────────────
+    function iniciarTema() {
+        const t = localStorage.getItem('tema') || 'escuro';
+        document.documentElement.setAttribute('data-tema', t);
+        const btn = document.getElementById('btn-tema');
+        if (btn) btn.textContent = t === 'escuro' ? '☀️ Tema Claro' : '🌙 Tema Escuro';
+    }
+    function toggleTema() {
+        const t = localStorage.getItem('tema') || 'escuro';
+        const novo = t === 'escuro' ? 'claro' : 'escuro';
+        localStorage.setItem('tema', novo);
+        document.documentElement.setAttribute('data-tema', novo);
+        document.getElementById('btn-tema').textContent =
+            novo === 'escuro' ? '☀️ Tema Claro' : '🌙 Tema Escuro';
+    }
+    iniciarTema();
+
+    // ── ESTADO ────────────────────────────────
+    let pilotoSeleccionado = null;
+    let pilotosNaCorrida = new Set();
+
+    // ── PILOTOS ───────────────────────────────
     async function carregarPilotos() {
         try {
+            // Carrega pilotos registados
             const r = await fetch('/api/admin/pilotos');
             const dados = await r.json();
+
+            // Carrega quem já está na corrida
+            const rc = await fetch('/api/corrida/classificacao');
+            const corrida = await rc.json();
+            pilotosNaCorrida = new Set(
+                (corrida.classificacao || []).map(p => p.carro_numero)
+            );
+
             const tbody = document.getElementById('pilotos-tbody');
+
             if (dados.pilotos && dados.pilotos.length > 0) {
-                tbody.innerHTML = dados.pilotos.map(p => `
-                    <tr>
-                        <td><strong style="color:var(--accent)">#${p.numero}</strong></td>
-                        <td>${p.nome}</td>
-                        <td><span class="badge">${p.equipa}</span></td>
-                        <td>${p.nacionalidade}</td>
-                        <td>${p.pontos}</td>
-                    </tr>
-                `).join('');
+                tbody.innerHTML = dados.pilotos.map(p => {
+                    const naCorrida = pilotosNaCorrida.has(p.numero);
+                    return `
+                        <tr>
+                            <td><strong style="color:var(--accent)">#${p.numero}</strong></td>
+                            <td>${p.nome}</td>
+                            <td><span class="badge">${p.equipa}</span></td>
+                            <td>${p.nacionalidade}</td>
+                            <td>${p.pontos}</td>
+                            <td>
+                                ${naCorrida
+                                    ? `<span class="na-corrida">✅ Na corrida</span>`
+                                    : `<button class="btn-verde"
+                                          onclick="abrirModal(${p.numero}, '${p.nome}', '${p.equipa}')">
+                                          🏁 Adicionar à Corrida
+                                       </button>`
+                                }
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             } else {
-                tbody.innerHTML = `<tr><td colspan="5" class="empty-state">
-                    Nenhum piloto registado ainda
-                </td></tr>`;
+                tbody.innerHTML = `
+                    <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:40px">
+                        Nenhum piloto registado ainda
+                    </td></tr>
+                `;
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error('Erro ao carregar pilotos:', e);
+        }
     }
 
     async function criarPiloto() {
         const fb = document.getElementById('feedback-piloto');
         const dados = {
             numero: parseInt(document.getElementById('numero').value),
-            nome: document.getElementById('nome').value,
-            equipa: document.getElementById('equipa').value,
-            nacionalidade: document.getElementById('nacionalidade').value,
+            nome: document.getElementById('nome').value.trim(),
+            equipa: document.getElementById('equipa').value.trim(),
+            nacionalidade: document.getElementById('nacionalidade').value.trim(),
             pontos: 0
         };
 
@@ -129,8 +343,9 @@
                 body: JSON.stringify(dados)
             });
             const resp = await r.json();
-            if (resp.detail || r.status >= 400) {
-                fb.textContent = '❌ Piloto já existe ou dados inválidos';
+
+            if (r.status === 409 || resp.detail) {
+                fb.textContent = '❌ Piloto já existe com este número';
                 fb.className = 'feedback erro';
             } else {
                 fb.textContent = `✅ ${dados.nome} registado com sucesso!`;
@@ -145,6 +360,62 @@
             fb.className = 'feedback erro';
         }
     }
+
+    // ── MODAL ─────────────────────────────────
+    function abrirModal(numero, nome, equipa) {
+        pilotoSeleccionado = { numero, nome, equipa };
+        document.getElementById('modal-nome').textContent = `#${numero} ${nome}`;
+        document.getElementById('modal-detalhes').textContent = equipa;
+        document.getElementById('modal-posicao').value = pilotosNaCorrida.size + 1;
+        document.getElementById('modal-volta').value = 1;
+        document.getElementById('feedback-modal').textContent = '';
+        document.getElementById('modal-overlay').classList.add('aberto');
+    }
+
+    function fecharModal() {
+        document.getElementById('modal-overlay').classList.remove('aberto');
+        pilotoSeleccionado = null;
+    }
+
+    async function confirmarAddCorrida() {
+        if (!pilotoSeleccionado) return;
+
+        const fb = document.getElementById('feedback-modal');
+        const posicao = parseInt(document.getElementById('modal-posicao').value);
+        const volta = parseInt(document.getElementById('modal-volta').value);
+
+        try {
+            const r = await fetch(
+                `/api/admin/pilotos/${pilotoSeleccionado.numero}/iniciar-corrida`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ posicao, volta })
+                }
+            );
+            const resp = await r.json();
+
+            if (resp.erro) {
+                fb.textContent = `❌ ${resp.erro}`;
+                fb.className = 'feedback erro';
+            } else {
+                fb.textContent = `✅ ${resp.mensagem}`;
+                fb.className = 'feedback sucesso';
+                setTimeout(() => {
+                    fecharModal();
+                    carregarPilotos();
+                }, 1500);
+            }
+        } catch(e) {
+            fb.textContent = '❌ Erro de ligação';
+            fb.className = 'feedback erro';
+        }
+    }
+
+    // Fecha modal ao clicar fora
+    document.getElementById('modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) fecharModal();
+    });
 
     carregarPilotos();
     setInterval(carregarPilotos, 5000);

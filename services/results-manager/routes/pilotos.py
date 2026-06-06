@@ -24,3 +24,12 @@ async def listar_pilotos():
         del p["_id"]
         pilotos.append(p)
     return {"total": len(pilotos), "pilotos": pilotos}
+
+@router.get("/pilotos/{numero}")
+async def get_piloto(numero: int):
+    piloto = await pilotos_collection.find_one({"numero": numero})
+    if not piloto:
+        raise HTTPException(status_code=404, detail="Piloto não encontrado")
+    piloto["id"] = str(piloto["_id"])
+    del piloto["_id"]
+    return piloto   

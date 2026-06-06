@@ -157,3 +157,46 @@ async def enviar_telemetria(request: Request):
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+@app.post("/api/admin/pilotos/{numero}/iniciar-corrida")
+async def iniciar_corrida_piloto(numero: int, request: Request):
+    """
+    Coloca um piloto registado na corrida
+    enviando o primeiro evento de telemetria.
+    """
+    dados_extra = await request.json()
+    posicao = dados_extra.get("posicao", 1)
+    volta = dados_extra.get("volta", 1)
+
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        # Vai buscar o piloto registado
+        try:
+            r = await client.get(f"{RESULTS_MANAGER_URL}/api/v1/pilotos/{numero}")
+            if r.status_code == 404:
+                return {"erro": "Piloto não encontrado"}
+            piloto = r.json()
+        except Exception:
+            return {"erro": "Erro ao buscar piloto"}
+
+        # Envia telemetria inicial
+        telemetria = {
+            "carro_numero": piloto["numero"],
+            "piloto_nome": piloto["nome"],
+            "velocidade": 0.0,
+            "rpm": 0,
+            "posicao_pista": posicao,
+            "volta_atual": volta
+        }
+
+        try:
+            r = await client.post(
+                f"{DATA_PROCESSOR_URL}/api/v1/telemetria",
+                json=telemetria
+            )
+            return {
+                "status": "ok",
+                "mensagem": f"{piloto['nome']} adicionado à corrida na posição {posicao}",
+                "piloto": piloto
+            }
+        except Exception:
+            return {"erro": "Erro ao enviar telemetria"}
