@@ -7,9 +7,6 @@
 ![Docker](https://img.shields.io/badge/Docker-Swarm-blue)
 ![Nginx](https://img.shields.io/badge/Nginx-1.31-brightgreen)
 
-Projecto académico desenvolvido no âmbito da unidade curricular de
-**Arquitectura Avançada de Sistemas** (2025/2026) — UAL DECC.
-
 Sistema distribuído de gestão de resultados de Fórmula 1, implementado
 com microserviços, replicação de dados, cluster Docker Swarm e
 interface web em tempo real.
