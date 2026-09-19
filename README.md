@@ -104,51 +104,7 @@ interface web em tempo real.
 
 ## 📁 Estrutura do Projecto
 
-UALSpeed/
-│
-├── services/
-│   ├── data-processor/          # Serviço de telemetria
-│   │   ├── main.py              # Aplicação FastAPI
-│   │   ├── models.py            # Modelos Pydantic
-│   │   ├── routes/
-│   │   │   └── telemetria.py    # Rotas de telemetria
-│   │   ├── requirements.txt
-│   │   └── Dockerfile
-│   │
-│   ├── results-manager/         # Serviço de resultados
-│   │   ├── main.py
-│   │   ├── models.py
-│   │   ├── database.py          # Ligação MongoDB
-│   │   ├── consumer.py          # Consumer Redis
-│   │   ├── routes/
-│   │   │   ├── classificacao.py
-│   │   │   └── pilotos.py
-│   │   ├── requirements.txt
-│   │   └── Dockerfile
-│   │
-│   └── web-interface/           # Interface web
-│       ├── main.py
-│       ├── static/
-│       │   ├── index.html       # Dashboard de métricas
-│       │   ├── corrida.html     # Corrida ao vivo
-│       │   └── admin.html       # Painel administrativo
-│       ├── requirements.txt
-│       └── Dockerfile
-│
-├── infra/
-│   ├── nginx/
-│   │   └── nginx.conf           # Configuração do load balancer
-│   ├── mongo/
-│   │   └── init-replica.js      # Inicialização do Replica Set
-│   └── scripts/
-│       └── demo-swarm.sh        # Script de demonstração
-│
-├── docs/
-│   └── architecture.md          # Decisões arquitecturais
-│
-├── docker-compose.yml           # Orquestração local
-├── docker-stack.yml             # Deploy Docker Swarm
-└── README.md
+<img width="557" height="881" alt="Captura de ecrã 2026-09-19 182345" src="https://github.com/user-attachments/assets/1e9a4897-5aaa-465a-ae6e-f2e39c5e8c99" />
 
 ---
 
