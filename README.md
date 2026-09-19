@@ -35,10 +35,8 @@ interface web em tempo real.
 
 ### Fluxo de dados
 
-Carro F1 → data-processor → Redis (Pub/Sub) → results-manager → MongoDB
-↓
-Replica Set
-(Primary + 2 Secondary)
+<img width="722" height="127" alt="Captura de ecrã 2026-09-19 181804" src="https://github.com/user-attachments/assets/0be25e0f-25d7-45d3-b349-d7f3036e8c9a" />
+   
 
 ---
 
