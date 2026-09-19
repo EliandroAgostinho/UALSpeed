@@ -29,7 +29,8 @@ interface web em tempo real.
 
 ## 🏗️ Arquitectura do Sistema
 
- ![Uploading image.png…]()
+<img width="402" height="330" alt="Captura de ecrã 2026-09-19 181244" src="https://github.com/user-attachments/assets/fce74438-ecba-462d-8bef-e732deaa62dc" />
+
 
 
 ### Fluxo de dados
