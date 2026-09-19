@@ -29,19 +29,8 @@ interface web em tempo real.
 
 ## 🏗️ Arquitectura do Sistema
 
-  Cliente (Browser)
-        ↓
-Nginx (Load Balancer — porta 80)
-  ↙              ↓              ↘
-/data/         /results/       /dashboard/
-↓               ↓               ↓
-data-processor  results-manager  web-interface
-(2 réplicas)    (2 réplicas)     (1 réplica)
-↓               ↓
-Redis          MongoDB
-(Pub/Sub)    Replica Set
-            ↙    ↘
-        Primary  Secondary×2
+ ![Uploading image.png…]()
+
 
 ### Fluxo de dados
 
