@@ -104,7 +104,7 @@ interface web em tempo real.
 
 ## 📁 Estrutura do Projecto
 
-<img width="557" height="881" alt="Captura de ecrã 2026-09-19 182345" src="https://github.com/user-attachments/assets/1e9a4897-5aaa-465a-ae6e-f2e39c5e8c99" />
+<img width="562" height="883" alt="Captura de ecrã 2026-09-19 182648" src="https://github.com/user-attachments/assets/f6785b65-c334-4f02-8ef0-d80e60f0eee7" />
 
 ---
 
